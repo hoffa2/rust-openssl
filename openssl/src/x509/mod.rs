@@ -253,12 +253,7 @@ impl X509Generator {
             let extension = match exttype.get_nid() {
                 Some(nid) => {
                     let ctx = builder.x509v3_context(None, None);
-                    X509Extension::new_nid(
-                        None,
-                        Some(&ctx),
-                        nid,
-                        &ext.to_string(),
-                    )?
+                    X509Extension::new_nid(None, Some(&ctx), nid, &ext.to_string())?
                 }
                 None => {
                     let ctx = builder.x509v3_context(None, None);
@@ -295,15 +290,11 @@ impl X509Generator {
 
             let exts = compat::X509_get0_extensions(cert.as_ptr());
             if exts != ptr::null_mut() {
-                cvt(
-                    ffi::X509_REQ_add_extensions(req.as_ptr(), exts as *mut _),
-                )?;
+                cvt(ffi::X509_REQ_add_extensions(req.as_ptr(), exts as *mut _))?;
             }
 
             let hash_fn = self.hash_type.as_ptr();
-            cvt(
-                ffi::X509_REQ_sign(req.as_ptr(), p_key.as_ptr(), hash_fn),
-            )?;
+            cvt(ffi::X509_REQ_sign(req.as_ptr(), p_key.as_ptr(), hash_fn))?;
 
             Ok(req)
         }
@@ -429,9 +420,7 @@ impl X509Builder {
     /// Adds an X509 extension value to the certificate.
     pub fn append_extension(&mut self, extension: X509Extension) -> Result<(), ErrorStack> {
         unsafe {
-            cvt(
-                ffi::X509_add_ext(self.0.as_ptr(), extension.as_ptr(), -1),
-            )?;
+            cvt(ffi::X509_add_ext(self.0.as_ptr(), extension.as_ptr(), -1))?;
             mem::forget(extension);
             Ok(())
         }
@@ -964,6 +953,14 @@ impl X509ReqRef {
             X509NameRef::from_ptr(name)
         }
     }
+
+    pub fn public_key(&self) -> Result<PKey, ErrorStack> {
+        unsafe {
+            let pkey = cvt_p(ffi::X509_REQ_get_pubkey(self.as_ptr()))?;
+            assert!(!pkey.is_null());
+            Ok(PKey::from_ptr(pkey))
+        }
+    }
 }
 
 /// A collection of X.509 extensions.
@@ -1162,6 +1159,7 @@ mod compat {
     pub use ffi::X509_up_ref;
     pub use ffi::X509_get0_extensions;
     pub use ffi::X509_REQ_get_version;
+    pub use ffi::X509_REQ_get_pubkey;
     pub use ffi::X509_REQ_get_subject_name;
     pub use ffi::X509_get0_signature;
     pub use ffi::X509_ALGOR_get0;
@@ -1208,6 +1206,10 @@ mod compat {
 
     pub unsafe fn X509_REQ_get_subject_name(x: *mut ffi::X509_REQ) -> *mut ::ffi::X509_NAME {
         (*(*x).req_info).subject
+    }
+
+    pub unsafe fn X509_REQ_get_pubkey(x: *mut ffi::X509_REQ) -> *mut ::ffi::EVP_PKEY {
+        (*(*x).req_info).pubkey
     }
 
     pub unsafe fn X509_get0_signature(

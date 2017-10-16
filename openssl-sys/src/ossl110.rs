@@ -282,4 +282,5 @@ extern "C" {
     ) -> *mut PKCS12;
     pub fn X509_REQ_get_version(req: *const X509_REQ) -> c_long;
     pub fn X509_REQ_get_subject_name(req: *const X509_REQ) -> *mut ::X509_NAME;
+    pub fn X509_REQ_get_pubkey(req: *const X509_REQ) -> *mut ::EVP_PKEY;
 }

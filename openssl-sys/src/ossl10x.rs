@@ -325,7 +325,7 @@ pub struct X509_REQ_INFO {
     pub enc: ASN1_ENCODING,
     pub version: *mut ::ASN1_INTEGER,
     pub subject: *mut ::X509_NAME,
-    pubkey: *mut c_void,
+    pub pubkey: *mut ::EVP_PKEY,
     pub attributes: *mut stack_st_X509_ATTRIBUTE,
 }
 
